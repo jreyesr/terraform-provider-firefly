@@ -1,4 +1,4 @@
-module github.com/hashicorp/terraform-provider-scaffolding-framework
+module github.com/jreyesr/terraform-provider-firefly
 
 go 1.19
 
