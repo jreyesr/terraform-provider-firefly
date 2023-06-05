@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "golang.go",
-        "hashicorp.hcl"
+        "hashicorp.hcl",
+        "hashicorp.terraform"
     ]
 }
