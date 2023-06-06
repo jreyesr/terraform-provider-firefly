@@ -77,6 +77,7 @@ func (d *SysInfoDataSource) Configure(ctx context.Context, req datasource.Config
 }
 
 func (d *SysInfoDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	tflog.Trace(ctx, "SysInfoDataSource.Read")
 	var data SysInfoDataSourceModel
 
 	// Read Terraform configuration data into the model
@@ -88,7 +89,7 @@ func (d *SysInfoDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	// If applicable, this is a great opportunity to initialize any necessary
 	// provider client data and make a call using it.
-	httpReq, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/about", "https://demo.firefly-iii.org"), nil)
+	httpReq, _ := http.NewRequest("GET", "/api/v1/about", nil)
 	httpResp, err := d.client.Do(httpReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
@@ -97,18 +98,23 @@ func (d *SysInfoDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	defer httpResp.Body.Close()
 
 	var respData struct {
-		Data SysInfoDataSourceModel `json:"data"`
+		Data struct {
+			Version    string `json:"version"`
+			APIVersion string `json:"api_version"`
+			PHPVersion string `json:"php_version"`
+			OS         string `json:"os"`
+			DBDriver   string `json:"driver"`
+		} `json:"data"`
 	}
 	json.NewDecoder(httpResp.Body).Decode(&respData)
 
-	data.Version = types.StringValue(respData.Data.Version.String())
-	data.APIVersion = types.StringValue(respData.Data.APIVersion.String())
-	data.PHPVersion = types.StringValue(respData.Data.PHPVersion.String())
-	data.OS = types.StringValue(respData.Data.OS.String())
-	data.DBDriver = types.StringValue(respData.Data.DBDriver.String())
+	data.Version = types.StringValue(respData.Data.Version)
+	data.APIVersion = types.StringValue(respData.Data.APIVersion)
+	data.PHPVersion = types.StringValue(respData.Data.PHPVersion)
+	data.OS = types.StringValue(respData.Data.OS)
+	data.DBDriver = types.StringValue(respData.Data.DBDriver)
 
-	// Write logs using the tflog package
-	tflog.Trace(ctx, "read a data source")
+	tflog.Trace(ctx, "read a data source", map[string]any{"api_val": respData, "parsed": data})
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

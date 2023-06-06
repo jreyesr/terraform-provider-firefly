@@ -2,7 +2,9 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -27,9 +29,8 @@ type FireflyProvider struct {
 
 // FireflyProviderModel describes the provider data model.
 type FireflyProviderModel struct {
-	Endpoint     types.String `tfsdk:"endpoint"`
-	ClientID     types.String `tfsdk:"client_id"`
-	ClientSecret types.String `tfsdk:"client_secret"`
+	Endpoint    types.String `tfsdk:"endpoint"`
+	AccessToken types.String `tfsdk:"access_token"`
 }
 
 func (p *FireflyProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -50,17 +51,30 @@ func (p *FireflyProvider) Schema(ctx context.Context, req provider.SchemaRequest
 					),
 				},
 			},
-			"client_id": schema.StringAttribute{
-				MarkdownDescription: "An OAuth2 Client ID generated on the Firefly web API. See [the docs](https://docs.firefly-iii.org/firefly-iii/api/#authentication) for instructions.",
-				Required:            true,
-			},
-			"client_secret": schema.StringAttribute{
-				MarkdownDescription: "An OAuth2 Client Secret generated on the Firefly web API. See [the docs](https://docs.firefly-iii.org/firefly-iii/api/#authentication) for instructions.",
+			"access_token": schema.StringAttribute{
+				MarkdownDescription: "A Personal Access Token generated on the Firefly web API. See [the docs](https://docs.firefly-iii.org/firefly-iii/api/#personal-access-token) for instructions.",
 				Required:            true,
 				Sensitive:           true,
 			},
 		},
 	}
+}
+
+type fireflyTransport struct {
+	baseURL     string
+	accessToken string
+	rt          http.RoundTripper
+}
+
+func (t *fireflyTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	parsed, err := url.Parse(t.baseURL)
+	if err != nil {
+		return nil, err
+	}
+	r.URL.Scheme = parsed.Scheme
+	r.URL.Host = parsed.Host
+	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", t.accessToken))
+	return t.rt.RoundTrip(r)
 }
 
 func (p *FireflyProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
@@ -75,9 +89,13 @@ func (p *FireflyProvider) Configure(ctx context.Context, req provider.ConfigureR
 	// Configuration values are now available.
 	// if data.Endpoint.IsNull() { /* ... */ }
 
-	// Example client configuration for data sources and resources
 	client := http.DefaultClient
-	// TODO: Add OAuth configuration here, so that consumers of this data can just use it transparently
+	client.Transport = &fireflyTransport{
+		baseURL:     data.Endpoint.ValueString(),
+		accessToken: data.AccessToken.ValueString(),
+		rt:          http.DefaultTransport,
+	}
+
 	resp.DataSourceData = client
 	resp.ResourceData = client
 }

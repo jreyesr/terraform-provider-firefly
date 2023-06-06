@@ -14,9 +14,8 @@ description: |-
 
 ```terraform
 provider "firefly" {
-  endpoint      = "http://localhost:8080"
-  client_id     = "1"
-  client_secret = "UW/SQq/jOa35kg4WnUYaFoZMyN4SHzz4xHnf9rN4r5A="
+  endpoint     = "http://localhost:8080"
+  access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI0MTEiLCJqdGkiOiJhM2RhZTAwZTFiNDVmZWUyZDRjOTJlY2E5M2U4ZmVjNzk5ZDMxODE1MmUwMGI4YTBkZmIzZTczYjY1NGE0NzQxMmIzNzdkMDRlMDU5NDhmMSIsImlhdCI6MTY4NjAxNjEzMy42NTkyMjEsIm5iZiI6MTY4NjAxNjEzMy42NTkyMjMsImV4cCI6MTcxNzYzODUzMy41MTM3MjUsInN1YiI6IjEiLCJzY29wZXMiOltdfQ..."
 }
 ```
 
@@ -25,6 +24,5 @@ provider "firefly" {
 
 ### Required
 
-- `client_id` (String) An OAuth2 Client ID generated on the Firefly web API. See [the docs](https://docs.firefly-iii.org/firefly-iii/api/#authentication) for instructions.
-- `client_secret` (String, Sensitive) An OAuth2 Client Secret generated on the Firefly web API. See [the docs](https://docs.firefly-iii.org/firefly-iii/api/#authentication) for instructions.
+- `access_token` (String, Sensitive) A Personal Access Token generated on the Firefly web API. See [the docs](https://docs.firefly-iii.org/firefly-iii/api/#personal-access-token) for instructions.
 - `endpoint` (String) The URL of the Firefly instance, with an optional port, such as <http://firefly.local> or <http://firefly.local:8000>
